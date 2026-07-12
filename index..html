@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProMath | Professionele Werkblad Generator</title>
+    <!-- Google Fonts voor die premium look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@500;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --secondary: #0EA5E9;
+            --success: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --bg-app: #F8FAFC;
+            --bg-sidebar: #FFFFFF;
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+            --border: #E2E8F0;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+
+        .dark-mode {
+            --bg-app: #0F172A;
+            --bg-sidebar: #1E293B;
+            --text-main: #F1F5F9;
+            --text-muted: #94A3B8;
+            --border: #334155;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-app);
+            color: var(--text-main);
+            transition: background-color 0.3s;
+            overflow-x: hidden;
+        }
+
+        /* LAYOUT */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 380px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            padding: 2rem;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            overflow-y: auto;
+            z-index: 10;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .logo {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        /* CONFIGURATION STYLES */
+        .section-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin: 1.5rem 0 1rem;
+            font-weight: 700;
+        }
+
+        .op-selector {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .op-card {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 1.25rem;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .op-card.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-control { margin-bottom: 1rem; }
+        label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; }
+        
+        input[type="number"], select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            background: var(--bg-app);
+            color: var(--text-main);
+            font-size: 1rem;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        input:focus { border-color: var(--primary); ring: 2px solid var(--primary); }
+
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        .btn-secondary { background: var(--bg-app); color: var(--text-main); border: 1px solid var(--border); margin-top: 0.75rem; }
+
+        /* MAIN CONTENT / PREVIEW */
+        .preview-area {
+            flex: 1;
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        .stats-bar {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            background: var(--bg-sidebar);
+            padding: 1rem 2rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-item { text-align: center; }
+        .stat-label { font-size: 0.75rem; color: var(--text-muted); display: block; }
+        .stat-value { font-size: 1.25rem; font-weight: 700; color: var(--primary); }
+
+        /* THE PAPER (A4 Look) */
+        .paper {
+            background: white;
+            width: 210mm;
+            min-height: 297mm;
+            padding: 20mm;
+            box-shadow: var(--shadow-lg);
+            border-radius: 4px;
+            color: #1a1a1a;
+            position: relative;
+            display: none; /* Tonen na genereren */
+        }
+
+        .paper-header {
+            border-bottom: 2px solid #1a1a1a;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .paper-title { font-family: 'Outfit', sans-serif; font-size: 2.5rem; margin: 0; }
+        .student-info { font-size: 1rem; line-height: 2; }
+
+        .problem-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem 3rem;
+        }
+
+        .problem {
+            display: flex;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 0.5rem;
+        }
+
+        .problem-num { width: 40px; font-size: 0.9rem; color: #999; font-family: 'Inter'; }
+        .problem-text { flex-grow: 1; }
+        .answer-box {
+            width: 100px;
+            height: 45px;
+            border: 2px solid #333;
+            border-radius: 6px;
+            text-align: center;
+            font-family: 'JetBrains Mono';
+            font-size: 1.25rem;
+            background: transparent;
+        }
+
+        /* STATUS COLORS */
+        .correct { background-color: #d1fae5 !important; border-color: #059669 !important; color: #065f46; }
+        .incorrect { background-color: #fee2e2 !important; border-color: #dc2626 !important; color: #991b1b; }
+        .hint { color: var(--primary); font-size: 0.8rem; font-weight: bold; margin-left: 5px; }
+
+        /* FLOATING ACTION BAR */
+        .action-fab {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            gap: 1rem;
+            z-index: 100;
+        }
+
+        .fab-btn {
+            background: var(--primary);
+            color: white;
+            width: 56px;
+            height: 56px;
+            border-radius: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-lg);
+            cursor: pointer;
+            border: none;
+            transition: transform 0.2s;
+        }
+        .fab-btn:hover { transform: scale(1.1); }
+
+        /* PRINT SETTINGS */
+        @media print {
+            .sidebar, .action-fab, .stats-bar, .action-hints { display: none !important; }
+            body { background: white; }
+            .preview-area { padding: 0; }
+            .paper { box-shadow: none; border: none; display: block !important; width: 100%; padding: 0; }
+            .answer-box { border: 1px solid #000; }
+        }
+
+        @media (max-width: 1024px) {
+            .app-container { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; position: relative; }
+            .paper { width: 95vw; padding: 10mm; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="logo">
+            <span>📐</span> ProMath
+        </div>
+
+        <div class="section-title">1. Bewerkingen</div>
+        <div class="op-selector">
+            <div class="op-card active" data-op="add">+</div>
+            <div class="op-card active" data-op="sub">-</div>
+            <div class="op-card" data-op="mul">×</div>
+            <div class="op-card" data-op="div">÷</div>
+        </div>
+
+        <div class="section-title">2. Getal Bereik (Term 1)</div>
+        <div class="input-grid">
+            <div>
+                <label>Minimum</label>
+                <input type="number" id="min-1" value="1">
+            </div>
+            <div>
+                <label>Maximum</label>
+                <input type="number" id="max-1" value="20">
+            </div>
+        </div>
+
+        <div class="section-title">3. Getal Bereik (Term 2)</div>
+        <div class="input-grid">
+            <div>
+                <label>Minimum</label>
+                <input type="number" id="min-2" value="1">
+            </div>
+            <div>
+                <label>Maximum</label>
+                <input type="number" id="max-2" value="20">
+            </div>
+        </div>
+
+        <div id="div-extra" style="display:none;">
+            <div class="section-title">Delen Opties</div>
+            <select id="with-remainder">
+                <option value="no">Geen rest (Hele getallen)</option>
+                <option value="yes">Met rest (R-waarde)</option>
+            </select>
+        </div>
+
+        <div class="section-title">4. Werkblad Instellingen</div>
+        <div class="form-control">
+            <label>Aantal sommen</label>
+            <input type="number" id="sum-count" value="20">
+        </div>
+
+        <button class="btn btn-primary" onclick="generateWorksheet()">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+            Genereer Werkblad
+        </button>
+
+        <button class="btn btn-secondary" onclick="toggleDarkMode()">
+            🌙 Dark Mode Wisselen
+        </button>
+    </aside>
+
+    <!-- PREVIEW AREA -->
+    <main class="preview-area">
+        <div class="stats-bar" id="stats-bar" style="display:none;">
+            <div class="stat-item">
+                <span class="stat-label">Tijd</span>
+                <span class="stat-value" id="timer">00:00</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Voortgang</span>
+                <span class="stat-value" id="progress">0/0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Score</span>
+                <span class="stat-value" id="score-text">--</span>
+            </div>
+        </div>
+
+        <div id="paper" class="paper">
+            <div class="paper-header">
+                <div>
+                    <h2 class="paper-title">Rekenwerkblad</h2>
+                    <p style="color: var(--text-muted)">Gegenereerd door ProMath</p>
+                </div>
+                <div class="student-info">
+                    Naam: ____________________<br>
+                    Datum: ____________________<br>
+                    Score: ________ / ________
+                </div>
+            </div>
+            <div id="problem-grid" class="problem-grid">
+                <!-- Sommen worden hier geladen -->
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- ACTIONS -->
+<div class="action-fab" id="actions" style="display:none;">
+    <button class="fab-btn" onclick="checkAnswers()" title="Nakijken" style="background: var(--success);">
+        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+    </button>
+    <button class="fab-btn" onclick="toggleHints()" title="Antwoorden Tonen" style="background: var(--secondary);">
+        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+    </button>
+    <button class="fab-btn" onclick="window.print()" title="Printen">
+        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+    </button>
+</div>
+
+<canvas id="canvas-confetti" style="position:fixed;top:0;left:0;pointer-events:none;z-index:9999;"></canvas>
+
+<script>
+    let currentProblems = [];
+    let timerInterval;
+    let seconds = 0;
+    let hintsVisible = false;
+
+    // Toggle Operations
+    document.querySelectorAll('.op-card').forEach(card => {
+        card.addEventListener('click', () => {
+            card.classList.toggle('active');
+            const hasDiv = Array.from(document.querySelectorAll('.op-card.active')).some(c => c.dataset.op === 'div');
+            document.getElementById('div-extra').style.display = hasDiv ? 'block' : 'none';
+        });
+    });
+
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+    }
+
+    function generateWorksheet() {
+        const ops = Array.from(document.querySelectorAll('.op-card.active')).map(c => c.dataset.op);
+        if (ops.length === 0) return alert("Selecteer minimaal één bewerking.");
+
+        const min1 = parseInt(document.getElementById('min-1').value);
+        const max1 = parseInt(document.getElementById('max-1').value);
+        const min2 = parseInt(document.getElementById('min-2').value);
+        const max2 = parseInt(document.getElementById('max-2').value);
+        const count = parseInt(document.getElementById('sum-count').value);
+        const remainder = document.getElementById('with-remainder').value === 'yes';
+
+        currentProblems = [];
+        const grid = document.getElementById('problem-grid');
+        grid.innerHTML = '';
+
+        for (let i = 0; i < count; i++) {
+            const op = ops[Math.floor(Math.random() * ops.length)];
+            let a, b, text, correct;
+
+            switch(op) {
+                case 'add':
+                    a = rand(min1, max1);
+                    b = rand(min2, max2);
+                    correct = a + b;
+                    text = `${a} + ${b} =`;
+                    break;
+                case 'sub':
+                    a = rand(min1, max1);
+                    // Zorg dat a >= b om negatief te voorkomen (behalve als specifiek gewenst)
+                    b = rand(min2, Math.min(a, max2));
+                    correct = a - b;
+                    text = `${a} - ${b} =`;
+                    break;
+                case 'mul':
+                    a = rand(min1, max1);
+                    b = rand(min2, max2);
+                    correct = a * b;
+                    text = `${a} × ${b} =`;
+                    break;
+                case 'div':
+                    if (!remainder) {
+                        // Maak een 'mooie' deelsom
+                        const q = rand(min1, max1);
+                        b = rand(min2, max2);
+                        a = q * b;
+                        correct = q;
+                    } else {
+                        a = rand(min1, max1);
+                        b = rand(min2, max2);
+                        const q = Math.floor(a / b);
+                        const r = a % b;
+                        correct = r === 0 ? `${q}` : `${q} r ${r}`;
+                    }
+                    text = `${a} ÷ ${b} =`;
+                    break;
+            }
+
+            currentProblems.push({ correct });
+            
+            const div = document.createElement('div');
+            div.className = 'problem';
+            div.innerHTML = `
+                <span class="problem-num">${i + 1}.</span>
+                <span class="problem-text">${text}</span>
+                <input type="text" class="answer-box" id="ans-${i}" autocomplete="off">
+                <span id="hint-${i}" class="hint" style="display:none"></span>
+            `;
+            grid.appendChild(div);
+        }
+
+        // UI Updates
+        document.getElementById('paper').style.display = 'block';
+        document.getElementById('stats-bar').style.display = 'flex';
+        document.getElementById('actions').style.display = 'flex';
+        document.getElementById('progress').innerText = `0 / ${count}`;
+        resetTimer();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function rand(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function resetTimer() {
+        clearInterval(timerInterval);
+        seconds = 0;
+        timerInterval = setInterval(() => {
+            seconds++;
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            document.getElementById('timer').innerText = `${m}:${s}`;
+        }, 1000);
+    }
+
+    function checkAnswers() {
+        let score = 0;
+        currentProblems.forEach((p, i) => {
+            const input = document.getElementById(`ans-${i}`);
+            const val = input.value.trim().toLowerCase().replace(/\s/g, '');
+            const target = p.correct.toString().toLowerCase().replace(/\s/g, '');
+
+            if (val === target) {
+                input.className = 'answer-box correct';
+                score++;
+            } else if (val !== "") {
+                input.className = 'answer-box incorrect';
+            }
+        });
+
+        document.getElementById('score-text').innerText = `${score} / ${currentProblems.length}`;
+        document.getElementById('progress').innerText = `${currentProblems.length} / ${currentProblems.length}`;
+        
+        if (score === currentProblems.length) {
+            triggerConfetti();
+        }
+    }
+
+    function toggleHints() {
+        hintsVisible = !hintsVisible;
+        currentProblems.forEach((p, i) => {
+            const hint = document.getElementById(`hint-${i}`);
+            hint.innerText = `(${p.correct})`;
+            hint.style.display = hintsVisible ? 'inline' : 'none';
+        });
+    }
+
+    // CONFETTI EFFECT
+    function triggerConfetti() {
+        const canvas = document.getElementById('canvas-confetti');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        let pieces = [];
+        const colors = ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#0EA5E9'];
+
+        for (let i = 0; i < 200; i++) {
+            pieces.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height - canvas.height,
+                r: Math.random() * 8 + 4,
+                d: Math.random() * 10,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                tilt: Math.random() * 10 - 10
+            });
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            pieces.forEach(p => {
+                ctx.beginPath();
+                ctx.lineWidth = p.r;
+                ctx.strokeStyle = p.color;
+                ctx.moveTo(p.x + p.tilt + p.r / 2, p.y);
+                ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 2);
+                ctx.stroke();
+                p.y += Math.cos(p.d) + 2 + p.r / 2;
+                p.tilt = Math.sin(p.d) * 15;
+                if (p.y <= canvas.height) requestAnimationFrame(draw);
+            });
+        }
+        draw();
+    }
+</script>
+
+</body>
+</html>
